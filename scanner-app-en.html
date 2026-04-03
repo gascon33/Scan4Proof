@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>goldberry-marker-scan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="light"]{--bg:#f4f1eb;--surface:#fcfaf7;--surface2:#efe9df;--text:#1f1b16;--muted:#6f665c;--border:rgba(31,27,22,.12);--primary:#111;--accent:#d6ff39;--success:#2f8f54;--danger:#a13444;--shadow:0 14px 40px rgba(0,0,0,.12);--r:22px;--font:'Manrope',system-ui,sans-serif}
+    [data-theme="dark"]{--bg:#11100e;--surface:#191714;--surface2:#23201c;--text:#f4eee6;--muted:#b7afa5;--border:rgba(255,255,255,.1);--primary:#f4eee6;--accent:#d6ff39;--success:#7fd39b;--danger:#ff7686;--shadow:0 16px 48px rgba(0,0,0,.42)}
+    *{box-sizing:border-box} html,body{margin:0} body{min-height:100dvh;background:radial-gradient(circle at top, rgba(214,255,57,.08), transparent 26%),var(--bg);color:var(--text);font:16px/1.5 var(--font)}
+    button,input{font:inherit} a{color:inherit} .app{max-width:780px;margin:0 auto;padding:16px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.brand{display:flex;align-items:center;gap:12px}.mark{width:42px;height:42px;border-radius:999px;border:1px solid var(--border);display:grid;place-items:center;background:linear-gradient(135deg,rgba(214,255,57,.22),transparent)}
+    .brand h1{margin:0;font-size:15px;letter-spacing:.08em;text-transform:uppercase}.brand p{margin:0;font-size:12px;color:var(--muted)}
+    .toggle{width:44px;height:44px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+    .screen{background:var(--surface);border:1px solid var(--border);border-radius:32px;box-shadow:var(--shadow);overflow:hidden}.camera-wrap{position:relative;aspect-ratio:9/16;background:#000;min-height:70dvh}
+    video,canvas{position:absolute;inset:0;width:100%;height:100%} video{object-fit:cover;background:#000} canvas{pointer-events:none}
+    .hud{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;padding:18px;pointer-events:none}
+    .pill,.toast,.controls,.debug{pointer-events:auto}.pill{display:inline-flex;align-items:center;gap:10px;width:max-content;max-width:100%;padding:10px 14px;border-radius:999px;background:rgba(10,10,10,.55);border:1px solid rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(12px);font-size:14px}.dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 8px rgba(214,255,57,.12)}.ok .dot{background:var(--success);box-shadow:0 0 0 8px rgba(127,211,155,.12)}
+    .center-guide{align-self:center;justify-self:center;margin:auto;width:min(76vw,420px);aspect-ratio:1/1;border-radius:999px;border:2px solid rgba(255,255,255,.72);box-shadow:0 0 0 999px rgba(0,0,0,.16);position:relative}.center-guide:before,.center-guide:after{content:'';position:absolute;inset:22px;border-radius:999px;border:2px solid rgba(214,255,57,.78)}.center-guide:after{inset:40px;border-color:rgba(255,255,255,.36)}
+    .bottom{display:grid;gap:12px}.toast{display:none;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:18px;background:rgba(10,10,10,.7);border:1px solid rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(12px)}.toast.show{display:flex}.toast strong{display:block;font-size:14px}.toast span{display:block;font-size:12px;color:rgba(255,255,255,.72)}.badge{padding:7px 10px;border-radius:999px;background:rgba(127,211,155,.14);color:var(--success);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .controls{display:flex;gap:10px}.btn{flex:1;min-height:52px;padding:14px 16px;border-radius:999px;border:1px solid transparent;font-weight:800}.btn.primary{background:var(--accent);color:#101010}.btn.secondary{background:rgba(10,10,10,.55);color:#fff;border-color:rgba(255,255,255,.12)}
+    .panel{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:16px}.panel p{margin:0;color:var(--muted)}.debug{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.cell{padding:12px;border-radius:16px;background:var(--surface2);border:1px solid var(--border)}.cell span{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.cell strong{font-size:18px}
+    .sr{position:absolute;left:-9999px}
+    @media (max-width:640px){.camera-wrap{min-height:78dvh}.debug{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <a class="sr" href="#main">Skip to scanner</a>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"></path></svg>
+        </div>
+        <div><h1>GoldBerry Scanner</h1><p>Opens the product only after marker detection</p></div>
+      </div>
+      <button class="toggle" type="button" data-theme-toggle aria-label="Toggle theme">◐</button>
+    </header>
+
+    <main id="main" class="screen">
+      <section class="camera-wrap" aria-label="Scanner screen">
+        <video id="video" playsinline autoplay muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="hud">
+          <div id="statusPill" class="pill"><span class="dot"></span><span id="statusText">Preparing detection engine…</span></div>
+          <div class="center-guide" aria-hidden="true"></div>
+          <div class="bottom">
+            <div id="toast" class="toast" role="status" aria-live="polite"><div><strong>Code detected</strong><span>Opening product page…</span></div><div class="badge">Detected</div></div>
+            <div class="controls"><button id="startBtn" class="btn primary" type="button">Start camera</button><button id="testBtn" class="btn secondary" type="button">Test with sample photo</button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="panel" aria-label="Detection debug">
+      <p>Logic: the page opens only if the circular marker is found with the correct sequence of circle and triangle segments. Color is optional; detection is based on shape and symbol layout.</p>
+      <div class="debug">
+        <div class="cell"><span>Score</span><strong id="scoreValue">0%</strong></div>
+        <div class="cell"><span>State</span><strong id="stateValue">Waiting</strong></div>
+        <div class="cell"><span>Threshold</span><strong id="thresholdValue">82%</strong></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      const TARGET_URL = 'https://goldberry.vercel.app/';
+      const REQUIRED_SCORE = 82;
+      const REDIRECT_DELAY = 950;
+      const PROCESS_EVERY_MS = 220;
+      const MAX_SIZE = 420;
+      const statusText = document.getElementById('statusText');
+      const statusPill = document.getElementById('statusPill');
+      const toast = document.getElementById('toast');
+      const scoreValue = document.getElementById('scoreValue');
+      const stateValue = document.getElementById('stateValue');
+      const thresholdValue = document.getElementById('thresholdValue');
+      thresholdValue.textContent = REQUIRED_SCORE + '%';
+      const video = document.getElementById('video');
+      const overlay = document.getElementById('overlay');
+      const ctx = overlay.getContext('2d', { willReadFrequently: true });
+      const startBtn = document.getElementById('startBtn');
+      const testBtn = document.getElementById('testBtn');
+      const themeToggle = document.querySelector('[data-theme-toggle]');
+      let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      themeToggle.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme); });
+
+      let stream = null;
+      let scanning = false;
+      let locked = false;
+      let lastRun = 0;
+      let raf = 0;
+      const work = document.createElement('canvas');
+      const workCtx = work.getContext('2d', { willReadFrequently: true });
+      const refColor = new Image();
+      const refBW = new Image();
+      refColor.src = './assets/marker-color.jpeg';
+      refBW.src = './assets/marker-bw.jpeg';
+      const reference = { signature: null };
+
+      function setStatus(text, ok = false) {
+        statusText.textContent = text;
+        statusPill.classList.toggle('ok', ok);
+      }
+
+      function drawOverlay(progress = 0, found = false) {
+        const w = overlay.width, h = overlay.height;
+        ctx.clearRect(0, 0, w, h);
+        const size = Math.min(w, h) * 0.72;
+        const cx = w / 2, cy = h / 2, r = size / 2;
+        ctx.beginPath();
+        ctx.strokeStyle = found ? 'rgba(127,211,155,.95)' : 'rgba(214,255,57,.9)';
+        ctx.lineWidth = 5;
+        ctx.arc(cx, cy, r - 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (progress / 100));
+        ctx.stroke();
+      }
+
+      function waitImages() {
+        return Promise.all([refColor.decode(), refBW.decode()]);
+      }
+
+      function imageToGrayMatrix(img) {
+        const scale = Math.min(1, MAX_SIZE / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+        const w = Math.max(32, Math.round((img.naturalWidth || img.width) * scale));
+        const h = Math.max(32, Math.round((img.naturalHeight || img.height) * scale));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const cctx = c.getContext('2d', { willReadFrequently: true });
+        cctx.drawImage(img, 0, 0, w, h);
+        const data = cctx.getImageData(0, 0, w, h).data;
+        const gray = new Float32Array(w * h);
+        for (let i = 0, j = 0; i < data.length; i += 4, j++) gray[j] = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        return { gray, w, h };
+      }
+
+      function getFrameGrayFromCanvas(canvas) {
+        const side = MAX_SIZE;
+        work.width = side;
+        work.height = side;
+        workCtx.drawImage(canvas, 0, 0, side, side);
+        const data = workCtx.getImageData(0, 0, side, side).data;
+        const gray = new Float32Array(side * side);
+        for (let i = 0, j = 0; i < data.length; i += 4, j++) gray[j] = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        return { gray, w: side, h: side };
+      }
+
+      function threshold(gray) {
+        let sum = 0;
+        for (let i = 0; i < gray.length; i++) sum += gray[i];
+        const mean = sum / gray.length;
+        const out = new Uint8Array(gray.length);
+        for (let i = 0; i < gray.length; i++) out[i] = gray[i] < mean * 0.94 ? 1 : 0;
+        return out;
+      }
+
+      function centroid(mask, w, h) {
+        let sx = 0, sy = 0, c = 0;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const v = mask[y * w + x];
+            if (!v) continue;
+            sx += x; sy += y; c++;
+          }
+        }
+        if (!c) return { x: w / 2, y: h / 2, count: 0 };
+        return { x: sx / c, y: sy / c, count: c };
+      }
+
+      function radialSignature(gray, w, h) {
+        const mask = threshold(gray);
+        const c = centroid(mask, w, h);
+        const centerX = c.x, centerY = c.y;
+        const rays = 72;
+        const rings = [0.62, 0.74, 0.86];
+        const values = [];
+        let radius = Math.min(w, h) * 0.42;
+        for (let ri = 0; ri < rings.length; ri++) {
+          const rr = radius * rings[ri];
+          for (let i = 0; i < rays; i++) {
+            const a = (i / rays) * Math.PI * 2 - Math.PI / 2;
+            const x = Math.max(0, Math.min(w - 1, Math.round(centerX + Math.cos(a) * rr)));
+            const y = Math.max(0, Math.min(h - 1, Math.round(centerY + Math.sin(a) * rr)));
+            values.push(mask[y * w + x]);
+          }
+        }
+        return { values, cx: centerX, cy: centerY, radius };
+      }
+
+      function compareCircular(a, b) {
+        const len = Math.min(a.length, b.length);
+        let best = 0;
+        for (let shift = 0; shift < 72; shift++) {
+          let same = 0;
+          for (let ring = 0; ring < 3; ring++) {
+            for (let i = 0; i < 72; i++) {
+              const ai = ring * 72 + i;
+              const bi = ring * 72 + ((i + shift) % 72);
+              if (a[ai] === b[bi]) same++;
+            }
+          }
+          if (same > best) best = same;
+        }
+        return Math.round(best / len * 100);
+      }
+
+      function buildReference() {
+        const a = imageToGrayMatrix(refColor);
+        const b = imageToGrayMatrix(refBW);
+        const sa = radialSignature(a.gray, a.w, a.h).values;
+        const sb = radialSignature(b.gray, b.w, b.h).values;
+        reference.signature = sa.map((v, i) => (v + sb[i]) >= 1 ? 1 : 0);
+      }
+
+      function analyzeCanvas(canvas) {
+        const frame = getFrameGrayFromCanvas(canvas);
+        const sig = radialSignature(frame.gray, frame.w, frame.h);
+        const score = compareCircular(reference.signature, sig.values);
+        return { score, cx: sig.cx, cy: sig.cy, radius: sig.radius };
+      }
+
+      function drawFoundRing(score, found) {
+        drawOverlay(score, found);
+        scoreValue.textContent = score + '%';
+        stateValue.textContent = found ? 'Detected' : 'Searching';
+      }
+
+      function success(score) {
+        locked = true;
+        scanning = false;
+        if (stream) stream.getTracks().forEach(t => t.stop());
+        drawFoundRing(score, true);
+        setStatus('Code detected', true);
+        toast.classList.add('show');
+        setTimeout(() => { window.location.href = TARGET_URL; }, REDIRECT_DELAY);
+      }
+
+      async function prepare() {
+        await waitImages();
+        buildReference();
+        setStatus('Маркер загружен. Нажмите «Start camera»');
+        stateValue.textContent = 'Ready';
+      }
+
+      async function startCamera() {
+        if (scanning || locked) return;
+        try {
+          setStatus('Requesting camera access…');
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+          video.srcObject = stream;
+          await video.play();
+          overlay.width = video.videoWidth || 720;
+          overlay.height = video.videoHeight || 1280;
+          scanning = true;
+          startBtn.disabled = true;
+          startBtn.textContent = 'Scanning…';
+          setStatus('Place the marker inside the circle');
+          raf = requestAnimationFrame(loop);
+        } catch (e) {
+          console.error(e);
+          setStatus('Camera could not be opened');
+          stateValue.textContent = 'Error';
+        }
+      }
+
+      function snapshotCanvasFromVideo() {
+        const c = document.createElement('canvas');
+        c.width = video.videoWidth;
+        c.height = video.videoHeight;
+        const cctx = c.getContext('2d', { willReadFrequently: true });
+        cctx.drawImage(video, 0, 0, c.width, c.height);
+        return c;
+      }
+
+      function loop(ts) {
+        if (!scanning || locked) return;
+        if (ts - lastRun < PROCESS_EVERY_MS) { raf = requestAnimationFrame(loop); return; }
+        lastRun = ts;
+        if (!video.videoWidth) { raf = requestAnimationFrame(loop); return; }
+        const canvas = snapshotCanvasFromVideo();
+        const { score } = analyzeCanvas(canvas);
+        drawFoundRing(score, false);
+        setStatus(score >= REQUIRED_SCORE ? 'Match found' : 'Searching for marker… ' + score + '%');
+        if (score >= REQUIRED_SCORE) { success(score); return; }
+        raf = requestAnimationFrame(loop);
+      }
+
+      async function testReferenceScene() {
+        if (locked) return;
+        const testImg = new Image();
+        testImg.src = './assets/marker-scene.jpeg';
+        await testImg.decode();
+        const c = document.createElement('canvas');
+        c.width = testImg.naturalWidth; c.height = testImg.naturalHeight;
+        c.getContext('2d', { willReadFrequently: true }).drawImage(testImg, 0, 0);
+        const { score } = analyzeCanvas(c);
+        drawFoundRing(score, score >= REQUIRED_SCORE);
+        setStatus(score >= REQUIRED_SCORE ? 'Sample frame detected' : 'Sample frame did not reach threshold', score >= REQUIRED_SCORE);
+        if (score >= REQUIRED_SCORE) success(score);
+      }
+
+      startBtn.addEventListener('click', startCamera);
+      testBtn.addEventListener('click', testReferenceScene);
+      prepare().catch(err => { console.error(err); setStatus('Не удалось загрузить эталонные изображения'); stateValue.textContent = 'Error'; });
+    })();
+  </script>
+</body>
+</html>
