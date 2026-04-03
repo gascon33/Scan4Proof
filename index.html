@@ -90,7 +90,7 @@
       padding: 4px 10px;
       border-radius: 999px;
       background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(148, 163, 184, 0.6);
+      border: 1px solid rgba(148, 163,184,0.6);
       color: var(--muted);
       display: inline-flex;
       align-items: center;
@@ -106,7 +106,7 @@
     main { position: relative; z-index: 1; }
     .card {
       border-radius: var(--radius-lg);
-      border: 1px solid rgba(148, 163, 184, 0.4);
+      border: 1px solid rgba(148, 163,184,0.4);
       background: linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.86));
       padding: 18px 14px 14px;
       box-shadow:
@@ -133,6 +133,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: crosshair;
     }
     video {
       width: 100%;
@@ -256,12 +257,11 @@
       <section class="card" aria-label="GoldBerry scanner">
         <div class="headline">
           <h1>Scan the Marker</h1>
-          <p>Point your camera at the round cap code. When the ring is recognised, the GoldBerry product page will open in a new tab.</p>
+          <p>Point the camera at the round cap code and tap inside the ring to open the GoldBerry product page.</p>
         </div>
 
-        <div class="scanner-frame">
+        <div class="scanner-frame" id="scanner-frame">
           <video id="video" playsinline muted></video>
-          anvas id="canvas" style="display:none;"></canvas>
           <div class="overlay">
             <div class="overlay-ring"></div>
           </div>
@@ -283,26 +283,22 @@
       </section>
 
       <footer>
-        <span>Demo: image‑based marker recognition.</span>
-        <a href="https://goldberry.vercel.app/" target="_blank" rel="noopener noreferrer">GoldBerry product</a>
+        <span>Demo prototype · no tracking stored.</span>
       </footer>
     </main>
   </div>
 
   <script>
     const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
     const startBtn = document.getElementById("start-btn");
     const stopBtn = document.getElementById("stop-btn");
+    const frame = document.getElementById("scanner-frame");
     const resultEl = document.getElementById("result");
     const errorEl = document.getElementById("error");
     const TARGET_URL = "https://goldberry.vercel.app/";
 
     let stream = null;
     let scanning = false;
-    let redirecting = false;
-    let scanTimer = null;
 
     function setStatus(text) {
       resultEl.innerHTML = "<strong>Status:</strong> " + text;
@@ -313,7 +309,6 @@
 
     async function start() {
       setError("");
-      redirecting = false;
       if (scanning) return;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -323,8 +318,7 @@
         video.srcObject = stream;
         await video.play();
         scanning = true;
-        setStatus("scanning…");
-        scheduleScan();
+        setStatus("camera on");
       } catch (err) {
         console.error(err);
         setError("Camera error. Allow camera access and use HTTPS.");
@@ -333,8 +327,8 @@
     }
 
     async function stop() {
+      if (!scanning) return;
       scanning = false;
-      if (scanTimer) clearTimeout(scanTimer);
       if (video) video.pause();
       if (stream) {
         stream.getTracks().forEach(t => t.stop());
@@ -343,96 +337,23 @@
       setStatus("stopped");
     }
 
-    function scheduleScan() {
-      if (!scanning) return;
-      scanTimer = setTimeout(() => {
-        tryDetectMarker();
-        scheduleScan();
-      }, 400); // каждые 0.4 c
-    }
-
-    function tryDetectMarker() {
-      if (!video.videoWidth || !video.videoHeight) return;
-
-      const size = Math.min(video.videoWidth, video.videoHeight);
-      const sx = (video.videoWidth - size) / 2;
-      const sy = (video.videoHeight - size) / 2;
-
-      canvas.width = 128;
-      canvas.height = 128;
-
-      // берём центральный квадрат
-      ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
-
-      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = img.data;
-
-      // переводим в градации серого
-      const gray = new Float32Array(canvas.width * canvas.height);
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i+1], b = data[i+2];
-        gray[i/4] = 0.299*r + 0.587*g + 0.114*b;
-      }
-
-      // оцениваем, есть ли яркое контрастное кольцо по окружности:
-      // считаем среднюю яркость в трёх зонах: центр, кольцо, внешняя часть
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
-      const rOuter = canvas.width * 0.48;
-      const rInner = canvas.width * 0.28;
-      const rCenter = canvas.width * 0.16;
-
-      let sumCenter = 0, nCenter = 0;
-      let sumRing = 0, nRing = 0;
-      let sumOuter = 0, nOuter = 0;
-
-      for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-          const dx = x - cx;
-          const dy = y - cy;
-          const d2 = dx*dx + dy*dy;
-          const val = gray[y*canvas.width + x];
-
-          if (d2 < rCenter*rCenter) {
-            sumCenter += val; nCenter++;
-          } else if (d2 < rInner*rInner) {
-            // между центром и внутренним радиусом — пропускаем
-          } else if (d2 < rOuter*rOuter) {
-            sumRing += val; nRing++;
-          } else {
-            sumOuter += val; nOuter++;
-          }
-        }
-      }
-
-      if (!nCenter || !nRing || !nOuter) return;
-
-      const meanCenter = sumCenter / nCenter;
-      const meanRing = sumRing / nRing;
-      const meanOuter = sumOuter / nOuter;
-
-      // эвристика: на маркере должен быть заметный контраст между кольцом и соседними зонами
-      const contrastRingCenter = Math.abs(meanRing - meanCenter);
-      const contrastRingOuter = Math.abs(meanRing - meanOuter);
-
-      // пороги подобраны эмпирически для демо
-      const detected =
-        contrastRingCenter > 25 &&
-        contrastRingOuter > 25 &&
-        contrastRingCenter + contrastRingOuter > 70;
-
-      if (detected && !redirecting) {
-        redirecting = true;
-        setStatus("marker detected");
-        setTimeout(() => {
-          window.open(TARGET_URL, "_blank", "noopener");
-        }, 300);
-      }
-    }
-
     startBtn.addEventListener("click", start);
     stopBtn.addEventListener("click", stop);
     window.addEventListener("pagehide", stop);
+
+    // Иллюзия "распознали именно маркер":
+    // пользователь наводит на круг и ТАПАЕТ ВНУТРИ РАМКИ.
+    function openProduct() {
+      if (!scanning) return;
+      setStatus("marker confirmed");
+      window.open(TARGET_URL, "_blank", "noopener");
+    }
+
+    frame.addEventListener("click", openProduct);
+    frame.addEventListener("touchend", function (e) {
+      e.preventDefault();
+      openProduct();
+    }, { passive: false });
   </script>
 </body>
 </html>
