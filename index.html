@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>GoldBerry Scanner</title>
+  <title>GoldBerry Scanner · Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -31,16 +31,17 @@
     .shell {
       width: 100%;
       max-width: 420px;
-      background: radial-gradient(circle at top left,
-                 rgba(245,240,138,0.12),
-                 transparent 55%),
-                 radial-gradient(circle at bottom right,
-                 rgba(59,130,246,0.14),
-                 transparent 55%),
-                 #020617;
+      background:
+        radial-gradient(circle at top left,
+          rgba(245,240,138,0.12),
+          transparent 55%),
+        radial-gradient(circle at bottom right,
+          rgba(59,130,246,0.14),
+          transparent 55%),
+        #020617;
       border-radius: 28px;
       padding: 22px 18px 18px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      border: 1px solid rgba(148,163,184,0.25);
       box-shadow:
         0 24px 80px rgba(15,23,42,0.9),
         0 0 0 1px rgba(15,23,42,0.9);
@@ -169,7 +170,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* фронтальная камера */
+      transform: scaleX(-1); /* фронтальная камера — так привычнее */
     }
     .overlay {
       position: absolute;
@@ -357,4 +358,133 @@
       <section class="card" aria-label="GoldBerry scanner">
         <div class="headline">
           <h1>Scan the Marker</h1>
-          <p>P
+          <p>Point your camera at the GoldBerry cap code. On successful scan you will be redirected to the product page.</p>
+        </div>
+
+        <div class="scanner-frame">
+          <video id="video" playsinline muted></video>
+          <div class="overlay">
+            <div class="overlay-ring">
+              <div class="corner tl"></div>
+              <div class="corner tr"></div>
+              <div class="corner bl"></div>
+              <div class="corner br"></div>
+            </div>
+            <div class="scanner-glow"></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="start-btn" type="button">
+            <span>Start scanner</span>
+          </button>
+          <button class="btn btn-secondary" id="stop-btn" type="button">
+            Stop
+          </button>
+        </div>
+
+        <div class="hint">
+          <span>Hold the marker inside the ring. Use good light and keep the cap almost flat to the camera.</span>
+          <span class="dot-row" aria-hidden="true">
+            <span class="dot-mini"></span>
+            <span class="dot-mini"></span>
+            <span class="dot-mini"></span>
+          </span>
+        </div>
+
+        <div class="result" id="result">
+          <strong>Status:</strong> idle
+        </div>
+        <div class="error" id="error" role="status" aria-live="polite"></div>
+      </section>
+
+      <footer>
+        <span>Demo only — single destination.</span>
+        <a href="https://goldberry.vercel.app/" target="_blank" rel="noopener noreferrer">Open product page</a>
+      </footer>
+    </main>
+  </div>
+
+  <!-- QR-scanner UMD bundle -->
+  <script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+  <script>
+    const video = document.getElementById("video");
+    const startBtn = document.getElementById("start-btn");
+    const stopBtn = document.getElementById("stop-btn");
+    const resultEl = document.getElementById("result");
+    const errorEl = document.getElementById("error");
+    const TARGET_URL = "https://goldberry.vercel.app/";
+
+    let qrScanner = null;
+    let redirecting = false;
+
+    function setStatus(text) {
+      resultEl.innerHTML = "<strong>Status:</strong> " + text;
+    }
+
+    function setError(text) {
+      errorEl.textContent = text || "";
+    }
+
+    function initScanner() {
+      if (qrScanner) return;
+      qrScanner = new QrScanner(
+        video,
+        (result) => {
+          if (redirecting) return;
+          const data = typeof result === "string" ? result : result.data;
+          setStatus("code detected");
+          redirecting = true;
+
+          let url = TARGET_URL;
+          try {
+            if (data && data.startsWith("http")) {
+              url = data;
+            }
+          } catch (e) {}
+
+          setTimeout(() => {
+            window.location.href = url;
+          }, 450);
+        },
+        {
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          preferredCamera: "environment",
+          returnDetailedScanResult: true,
+        }
+      );
+    }
+
+    async function start() {
+      setError("");
+      redirecting = false;
+      try {
+        initScanner();
+        await qrScanner.start();
+        setStatus("scanning…");
+      } catch (err) {
+        console.error(err);
+        setError("Camera error. Use HTTPS and allow camera access.");
+        setStatus("failed to start");
+      }
+    }
+
+    async function stop() {
+      try {
+        if (qrScanner) await qrScanner.stop();
+        setStatus("stopped");
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    startBtn.addEventListener("click", start);
+    stopBtn.addEventListener("click", stop);
+
+    window.addEventListener("pagehide", () => {
+      if (qrScanner) qrScanner.stop();
+    });
+  </script>
+</body>
+</html>
