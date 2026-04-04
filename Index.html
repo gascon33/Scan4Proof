@@ -4,11 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>goldberry-scanner-single-file</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
-    :root,[data-theme="light"]{--bg:#f4f1eb;--surface:#fcfaf7;--surface2:#efe9df;--text:#1f1b16;--muted:#6f665c;--border:rgba(31,27,22,.12);--accent:#d6ff39;--success:#2f8f54;--danger:#aa3848;--shadow:0 18px 44px rgba(0,0,0,.12);--font:'Manrope',system-ui,sans-serif;--r:24px}
+    :root,[data-theme="light"]{--bg:#f4f1eb;--surface:#fcfaf7;--surface2:#efe9df;--text:#1f1b16;--muted:#6f665c;--border:rgba(31,27,22,.12);--accent:#d6ff39;--success:#2f8f54;--danger:#aa3848;--shadow:0 18px 44px rgba(0,0,0,.12);--font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--r:24px}
     [data-theme="dark"]{--bg:#11100e;--surface:#191714;--surface2:#23201c;--text:#f4eee6;--muted:#b7afa5;--border:rgba(255,255,255,.1);--accent:#d6ff39;--success:#7fd39b;--danger:#ff7e8b;--shadow:0 18px 52px rgba(0,0,0,.42)}
     *{box-sizing:border-box} html,body{margin:0} body{min-height:100dvh;background:radial-gradient(circle at top, rgba(214,255,57,.08), transparent 24%),var(--bg);color:var(--text);font:16px/1.5 var(--font)}
     button{font:inherit;cursor:pointer} .app{max-width:720px;margin:0 auto;padding:16px} .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
@@ -45,10 +42,10 @@
         <video id="video" playsinline autoplay muted></video>
         <canvas id="overlay"></canvas>
         <div class="hud">
-          <div id="statusPill" class="pill"><span class="dot"></span><span id="statusText">Loading marker references…</span></div>
+          <div id="statusPill" class="pill"><span class="dot"></span><span id="statusText">Loading marker references...</span></div>
           <div class="guide" aria-hidden="true"></div>
           <div class="bottom">
-            <div id="toast" class="toast" role="status" aria-live="polite"><div><strong>Code detected</strong><span>Opening product page…</span></div><div class="badge">Detected</div></div>
+            <div id="toast" class="toast" role="status" aria-live="polite"><div><strong>Code detected</strong><span>Opening product page...</span></div><div class="badge">Detected</div></div>
             <div class="controls"><button id="startBtn" class="btn primary" type="button">Start camera</button><button id="testBtn" class="btn secondary" type="button">Run self-test</button></div>
           </div>
         </div>
@@ -246,14 +243,14 @@
 
       async function prepare() {
         await buildReference();
-        setStatus('Marker references loaded. Press “Start camera”');
+        setStatus('Marker references loaded. Press "Start camera"');
         stateValue.textContent = 'Ready';
       }
 
       async function startCamera() {
         if (scanning || locked) return;
         try {
-          setStatus('Requesting camera access…');
+          setStatus('Requesting camera access...');
           stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
           video.srcObject = stream;
           await video.play();
@@ -261,7 +258,7 @@
           overlay.height = video.videoHeight || 1280;
           scanning = true;
           startBtn.disabled = true;
-          startBtn.textContent = 'Scanning…';
+          startBtn.textContent = 'Scanning...';
           setStatus('Place the marker inside the circle');
           raf = requestAnimationFrame(loop);
         } catch (error) {
@@ -287,7 +284,7 @@
         const canvas = snapshotFromVideo();
         const { score } = analyzeCanvas(canvas);
         drawState(score, false);
-        setStatus(score >= REQUIRED_SCORE ? 'Match threshold reached' : 'Searching for marker… ' + score + '%');
+        setStatus(score >= REQUIRED_SCORE ? 'Match threshold reached' : 'Searching for marker... ' + score + '%');
         if (score >= REQUIRED_SCORE) { onSuccess(score); return; }
         raf = requestAnimationFrame(loop);
       }
