@@ -1,6 +1,6 @@
 <!doctype html>
 
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
@@ -8,154 +8,105 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{
-      min-height:100dvh;
-      background:radial-gradient(circle at top,rgba(214,255,57,.14),transparent 26%) #0f1012;
-      color:#f5f6fa;
-      font:16px/1.5 system-ui,sans-serif;
-      -webkit-font-smoothing:antialiased;
+      background:#000;
+      display:flex;flex-direction:column;align-items:center;
+      min-height:100dvh;overflow:hidden;
+      font:16px/1.4 system-ui,sans-serif;
+      color:#fff;
     }
-    .app{max-width:480px;margin:0 auto;padding:16px;display:grid;gap:14px;}
-    /* header */
-    .top{display:flex;align-items:center;gap:12px;}
-    .logo{
-      width:44px;height:44px;border-radius:50%;
-      border:1px solid rgba(255,255,255,.12);
-      display:grid;place-items:center;flex-shrink:0;
-      background:radial-gradient(circle at 30% 0,rgba(214,255,57,.3),transparent 55%);
-    }
-    h1{font-size:15px;letter-spacing:.08em;text-transform:uppercase;}
-    .sub{font-size:12px;color:#8b8f9c;}
-    /* screen */
-    .screen{
-      background:#17181c;border:1px solid rgba(255,255,255,.12);
-      border-radius:32px;overflow:hidden;box-shadow:0 18px 52px rgba(0,0,0,.55);
-    }
-    .cam{position:relative;aspect-ratio:9/16;min-height:72dvh;background:#000;}
-    video,canvas{position:absolute;inset:0;width:100%;height:100%;}
-    video{object-fit:cover;}
-    canvas{pointer-events:none;}
-    /* HUD */
-    .hud{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:18px;}
-    .pill{
-      display:inline-flex;align-items:center;gap:10px;width:max-content;max-width:100%;
-      padding:10px 14px;border-radius:999px;
-      background:rgba(9,10,14,.78);border:1px solid rgba(255,255,255,.16);
-      backdrop-filter:blur(12px);font-size:14px;
-    }
-    .dot{width:10px;height:10px;border-radius:50%;background:#d6ff39;box-shadow:0 0 0 8px rgba(214,255,57,.16);}
-    .pill.ok .dot{background:#7fd39b;box-shadow:0 0 0 8px rgba(127,211,155,.18);}
-    .guide{
-      align-self:center;margin:auto;
-      width:min(74vw,340px);aspect-ratio:1;border-radius:50%;
-      border:2px solid rgba(255,255,255,.82);
-      box-shadow:0 0 0 999px rgba(0,0,0,.18);
+    #wrap{
       position:relative;
+      width:100vw;height:100dvh;
+      max-width:480px;
     }
-    .guide::before,.guide::after{
-      content:"";position:absolute;border-radius:50%;
-      border:2px solid rgba(214,255,57,.78);
+    video{
+      position:absolute;inset:0;
+      width:100%;height:100%;
+      object-fit:cover;
     }
-    .guide::before{inset:20px;}
-    .guide::after{inset:40px;border-color:rgba(255,255,255,.32);}
-    /* bottom */
-    .bottom{display:grid;gap:10px;}
-    .toast{
-      display:none;align-items:center;justify-content:space-between;gap:12px;
-      padding:14px 16px;border-radius:18px;
-      background:rgba(9,10,14,.86);border:1px solid rgba(255,255,255,.18);
-      backdrop-filter:blur(14px);
+    canvas#ov{
+      position:absolute;inset:0;
+      width:100%;height:100%;
+      pointer-events:none;
     }
-    .toast.show{display:flex;}
-    .toast strong{display:block;font-size:14px;}
-    .toast small{display:block;font-size:12px;color:rgba(255,255,255,.7);}
-    .badge{
-      padding:7px 10px;border-radius:999px;
-      background:rgba(127,211,155,.16);color:#7fd39b;
-      font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    /* top pill */
+    #pill{
+      position:absolute;top:20px;left:50%;transform:translateX(-50%);
+      display:flex;align-items:center;gap:8px;
+      padding:9px 16px;border-radius:999px;
+      background:rgba(0,0,0,.6);
+      border:1px solid rgba(255,255,255,.15);
+      backdrop-filter:blur(10px);
+      font-size:13px;white-space:nowrap;
+      transition:border-color .3s;
     }
-    .controls{display:flex;gap:10px;}
-    .btn{
-      flex:1;min-height:52px;padding:14px 16px;border-radius:999px;
-      border:1px solid transparent;font:inherit;font-weight:800;cursor:pointer;
+    #pill.ok{border-color:rgba(127,211,155,.6);}
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:#d6ff39;flex-shrink:0;
+      transition:background .3s;
     }
-    .primary{background:#d6ff39;color:#101010;}
-    .secondary{background:rgba(9,10,14,.8);color:#fff;border-color:rgba(255,255,255,.18);}
-    .btn:disabled{opacity:.4;cursor:default;}
-    /* panel */
-    .panel{
-      background:#17181c;border:1px solid rgba(255,255,255,.12);
-      border-radius:24px;padding:16px;display:grid;gap:10px;
-    }
-    .panel p{font-size:13px;color:#8b8f9c;}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-    .cell{
-      padding:12px;border-radius:16px;
-      background:#1f2127;border:1px solid rgba(255,255,255,.12);
-    }
-    .cell span{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8b8f9c;margin-bottom:6px;}
-    .cell strong{font-size:18px;}
+    #pill.ok .dot{background:#7fd39b;}
+
+```
+/* bottom button */
+#startBtn{
+  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+  padding:16px 48px;border-radius:999px;
+  background:#d6ff39;color:#101010;
+  font:inherit;font-weight:800;font-size:15px;
+  border:none;cursor:pointer;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+#startBtn:disabled{opacity:.4;cursor:default;}
+
+/* success overlay */
+#success{
+  display:none;
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.75);
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;
+  backdrop-filter:blur(6px);
+}
+#success.show{display:flex;}
+#success svg{width:72px;height:72px;}
+#success p{font-size:18px;font-weight:700;letter-spacing:.04em;}
+```
+
   </style>
 </head>
 <body>
-<div class="app">
-  <header class="top">
-    <div class="logo" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7">
-        <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/>
-        <path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"/>
-      </svg>
-    </div>
-    <div>
-      <h1>Scan4Proof</h1>
-      <p class="sub">Наведи камеру на маркер</p>
-    </div>
-  </header>
+<div id="wrap">
+  <video id="video" playsinline autoplay muted></video>
+  <canvas id="ov"></canvas>
 
-  <main class="screen">
-    <div class="cam">
-      <video id="video" playsinline autoplay muted></video>
-      <canvas id="overlay"></canvas>
-      <div class="hud">
-        <div id="pill" class="pill">
-          <span class="dot"></span>
-          <span id="pillTxt">Инициализация…</span>
-        </div>
-        <div class="guide" aria-hidden="true"></div>
-        <div class="bottom">
-          <div id="toast" class="toast" role="status" aria-live="polite">
-            <div>
-              <strong>Маркер найден!</strong>
-              <small>Переход на сайт…</small>
-            </div>
-            <div class="badge">OK</div>
-          </div>
-          <div class="controls">
-            <button id="startBtn" class="btn primary" disabled>Старт камеры</button>
-            <button id="testBtn" class="btn secondary">Тест</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+  <!-- status -->
 
-  <section class="panel">
-    <p>Сравнение по pHash (перцептивный хэш). Нет тяжёлых библиотек — работает на любом телефоне.</p>
-    <div class="stats">
-      <div class="cell"><span>Схожесть</span><strong id="simVal">—</strong></div>
-      <div class="cell"><span>Статус</span><strong id="stateVal">Ожидание</strong></div>
-      <div class="cell"><span>Порог</span><strong id="thrVal">—</strong></div>
-    </div>
-  </section>
+  <div id="pill"><span class="dot"></span><span id="pillTxt">Initializing…</span></div>
+
+  <!-- start -->
+
+<button id="startBtn" disabled>Start Camera</button>
+
+  <!-- success -->
+
+  <div id="success">
+    <svg viewBox="0 0 72 72" fill="none">
+      <circle cx="36" cy="36" r="34" stroke="#7fd39b" stroke-width="3"/>
+      <path d="M22 36l10 10 18-18" stroke="#7fd39b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p>Marker detected</p>
+  </div>
 </div>
 
 <script>
 (() => {
-  const TARGET_URL   = 'https://goldberry.vercel.app/';
-  const HASH_SIZE    = 16;          // 16×16 pHash → 256 бит
-  const THRESHOLD    = 0.75;        // схожесть 0..1, выше = лучше
-  const INTERVAL_MS  = 400;         // пауза между кадрами
+  const TARGET_URL  = 'https://goldberry.vercel.app/';
+  const INTERVAL_MS = 350;
+  const HASH_SIZE   = 32;   // bigger hash = more detail
+  const THRESHOLD   = 0.68; // lower = easier to match under camera distortion
 
-  /* Пути к референсным изображениям */
   const REF_PATHS = [
     'assets/ref1.jpeg',
     'assets/ref1.jpeg.jpg',
@@ -164,20 +115,13 @@
     'assets/ref4.jpeg.jpg',
   ];
 
-  /* DOM */
+  const video    = document.getElementById('video');
+  const ov       = document.getElementById('ov');
+  const octx     = ov.getContext('2d', { willReadFrequently: true });
   const pill     = document.getElementById('pill');
   const pillTxt  = document.getElementById('pillTxt');
-  const toast    = document.getElementById('toast');
-  const simVal   = document.getElementById('simVal');
-  const stateVal = document.getElementById('stateVal');
-  const thrVal   = document.getElementById('thrVal');
-  const video    = document.getElementById('video');
-  const overlay  = document.getElementById('overlay');
-  const ctx      = overlay.getContext('2d', { willReadFrequently: true });
   const startBtn = document.getElementById('startBtn');
-  const testBtn  = document.getElementById('testBtn');
-
-  thrVal.textContent = (THRESHOLD * 100).toFixed(0) + '%';
+  const success  = document.getElementById('success');
 
   let refHashes = [];
   let scanning  = false;
@@ -185,117 +129,113 @@
   let stream    = null;
   let timer     = null;
 
-  /* ── pHash ─────────────────────────────────────────────── */
+  /* ── pHash ──────────────────────────────────────────── */
 
-  function getPixels(img) {
+  // Resize image to NxN grayscale, compute DCT, return bit array
+  function pHash(source, size) {
+    const N = size;
     const c = document.createElement('canvas');
-    c.width = c.height = HASH_SIZE;
+    c.width = c.height = N;
     const x = c.getContext('2d', { willReadFrequently: true });
-    x.drawImage(img, 0, 0, HASH_SIZE, HASH_SIZE);
-    return x.getImageData(0, 0, HASH_SIZE, HASH_SIZE).data;
-  }
+    x.drawImage(source, 0, 0, N, N);
+    const d = x.getImageData(0, 0, N, N).data;
 
-  function toGrayRow(pixels) {
-    const n = HASH_SIZE * HASH_SIZE;
-    const g = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
+    // to grayscale float
+    const g = new Float32Array(N * N);
+    for (let i = 0; i < N * N; i++) {
       const o = i * 4;
-      g[i] = 0.299 * pixels[o] + 0.587 * pixels[o+1] + 0.114 * pixels[o+2];
+      g[i] = 0.299*d[o] + 0.587*d[o+1] + 0.114*d[o+2];
     }
-    return g;
-  }
 
-  /* 1-D DCT-II (наивная, достаточно быстрая для 16×16) */
-  function dct1d(arr) {
-    const N = arr.length;
-    const out = new Float32Array(N);
-    for (let k = 0; k < N; k++) {
-      let s = 0;
-      for (let n = 0; n < N; n++) s += arr[n] * Math.cos(Math.PI * k * (2*n+1) / (2*N));
-      out[k] = s;
+    // 2-D DCT via separable 1-D
+    function dct1(a) {
+      const n = a.length, r = new Float32Array(n);
+      for (let k = 0; k < n; k++) {
+        let s = 0;
+        for (let j = 0; j < n; j++) s += a[j] * Math.cos(Math.PI*k*(2*j+1)/(2*n));
+        r[k] = s;
+      }
+      return r;
     }
-    return out;
-  }
-
-  /* 2-D DCT: apply 1-D по строкам, затем по столбцам */
-  function dct2d(gray) {
-    const N = HASH_SIZE;
-    const tmp = new Float32Array(N * N);
-    // rows
+    const tmp = new Float32Array(N*N);
     for (let r = 0; r < N; r++) {
-      const row = gray.slice(r * N, r * N + N);
-      const d = dct1d(row);
-      for (let c = 0; c < N; c++) tmp[r * N + c] = d[c];
+      const row = g.slice(r*N, r*N+N);
+      const d1  = dct1(row);
+      for (let c2 = 0; c2 < N; c2++) tmp[r*N+c2] = d1[c2];
     }
-    // cols
-    const out = new Float32Array(N * N);
-    for (let c = 0; c < N; c++) {
+    const dct = new Float32Array(N*N);
+    for (let c2 = 0; c2 < N; c2++) {
       const col = new Float32Array(N);
-      for (let r = 0; r < N; r++) col[r] = tmp[r * N + c];
-      const d = dct1d(col);
-      for (let r = 0; r < N; r++) out[r * N + c] = d[r];
+      for (let r = 0; r < N; r++) col[r] = tmp[r*N+c2];
+      const d1 = dct1(col);
+      for (let r = 0; r < N; r++) dct[r*N+c2] = d1[r];
     }
-    return out;
-  }
 
-  function computeHash(img) {
-    const pixels = getPixels(img);
-    const gray   = toGrayRow(pixels);
-    const dct    = dct2d(gray);
-
-    // берём левый верхний квадрат 8×8 (кроме [0,0])
+    // top-left 8x8 (skip DC)
     const sub = [];
     for (let r = 0; r < 8; r++)
-      for (let c = 0; c < 8; c++)
-        if (r || c) sub.push(dct[r * HASH_SIZE + c]);
+      for (let c2 = 0; c2 < 8; c2++)
+        if (r||c2) sub.push(dct[r*N+c2]);
 
-    const mean = sub.reduce((a, b) => a + b, 0) / sub.length;
+    const mean = sub.reduce((a,b)=>a+b,0)/sub.length;
     return sub.map(v => v > mean ? 1 : 0);
   }
 
-  function similarity(h1, h2) {
-    let same = 0;
-    for (let i = 0; i < h1.length; i++) if (h1[i] === h2[i]) same++;
-    return same / h1.length;
+  function similarity(a, b) {
+    let s = 0;
+    for (let i = 0; i < a.length; i++) if (a[i]===b[i]) s++;
+    return s / a.length;
   }
 
-  /* ── Загрузка референсов ────────────────────────────────── */
+  // Compare at 3 crop sizes to handle zoom differences
+  function bestSimilarity(frameCanvas, refEntry) {
+    const w = frameCanvas.width, h = frameCanvas.height;
+    const crops = [1.0, 0.8, 0.65];
+    let best = 0;
+    for (const scale of crops) {
+      const cw = Math.round(w * scale), ch = Math.round(h * scale);
+      const cx = Math.round((w - cw) / 2),  cy = Math.round((h - ch) / 2);
+      const tmp = document.createElement('canvas');
+      tmp.width = cw; tmp.height = ch;
+      tmp.getContext('2d',{willReadFrequently:true}).drawImage(frameCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+      const h1 = pHash(tmp, HASH_SIZE);
+      const s  = similarity(h1, refEntry.hash);
+      if (s > best) best = s;
+    }
+    return best;
+  }
+
+  /* ── Refs ───────────────────────────────────────────── */
 
   function loadImg(src) {
     return new Promise((res, rej) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload  = () => res(img);
-      img.onerror = () => rej(new Error('Не загрузить: ' + src));
+      img.onerror = () => rej(src);
       img.src = src + '?v=' + Date.now();
     });
   }
 
   async function loadRefs() {
-    setStatus('Загрузка референсов…');
     let ok = 0;
     for (const path of REF_PATHS) {
       try {
         const img  = await loadImg(path);
-        const hash = computeHash(img);
+        const hash = pHash(img, HASH_SIZE);
         refHashes.push({ path, hash });
         ok++;
-      } catch(e) {
-        console.warn(e.message);
-      }
+      } catch(e) { console.warn('Skip:', e); }
     }
     if (ok === 0) {
-      setStatus('Ошибка: ни один референс не загружен');
-      stateVal.textContent = 'Ошибка';
-      return false;
+      setStatus('Failed to load references', false);
+      return;
     }
-    setStatus(`Готово (${ok} из ${REF_PATHS.length} загружено). Нажми «Старт».`, true);
-    stateVal.textContent = 'Готово';
+    setStatus('Ready', true);
     startBtn.disabled = false;
-    return true;
   }
 
-  /* ── UI helpers ─────────────────────────────────────────── */
+  /* ── UI ─────────────────────────────────────────────── */
 
   function setStatus(txt, ok = false) {
     pillTxt.textContent = txt;
@@ -303,118 +243,99 @@
   }
 
   function drawRing(sim) {
-    const w = overlay.width, h = overlay.height;
-    if (!w || !h) return;
-    ctx.clearRect(0, 0, w, h);
-    const r   = Math.min(w, h) * 0.35;
-    const cx  = w / 2, cy = h / 2;
-    const frac = Math.max(0, Math.min(1, sim / THRESHOLD));
+    const w = ov.width, h = ov.height;
+    if (!w||!h) return;
+    octx.clearRect(0,0,w,h);
+    const r   = Math.min(w,h)*0.36;
+    const cx  = w/2, cy = h/2;
+    const frac = Math.min(1, sim/THRESHOLD);
     const found = sim >= THRESHOLD;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r - 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
-    ctx.strokeStyle = found ? 'rgba(127,211,155,.98)' : 'rgba(214,255,57,.96)';
-    ctx.lineWidth = 5;
-    ctx.stroke();
+
+    // track ring
+    octx.beginPath();
+    octx.arc(cx, cy, r, -Math.PI/2, Math.PI*1.5);
+    octx.strokeStyle = 'rgba(255,255,255,.12)';
+    octx.lineWidth = 4;
+    octx.stroke();
+
+    // progress
+    octx.beginPath();
+    octx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + Math.PI*2*frac);
+    octx.strokeStyle = found ? '#7fd39b' : '#d6ff39';
+    octx.lineWidth = 4;
+    octx.stroke();
+
+    // guide circle (dashed)
+    octx.save();
+    octx.setLineDash([6,10]);
+    octx.beginPath();
+    octx.arc(cx, cy, r*0.72, 0, Math.PI*2);
+    octx.strokeStyle = 'rgba(255,255,255,.35)';
+    octx.lineWidth = 1.5;
+    octx.stroke();
+    octx.restore();
   }
 
-  /* ── Камера ─────────────────────────────────────────────── */
+  /* ── Camera ─────────────────────────────────────────── */
 
   async function startCamera() {
-    if (scanning || locked) return;
+    if (scanning||locked) return;
     try {
-      setStatus('Запрос камеры…');
+      setStatus('Starting camera…');
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } }, audio: false
+        video:{ facingMode:{ ideal:'environment' }, width:{ideal:1280}, height:{ideal:720} },
+        audio:false
       });
       video.srcObject = stream;
       await video.play();
-      overlay.width  = video.videoWidth  || 720;
-      overlay.height = video.videoHeight || 1280;
-
+      ov.width  = video.videoWidth  || 1280;
+      ov.height = video.videoHeight || 720;
       scanning = true;
-      startBtn.disabled = true;
-      startBtn.textContent = 'Сканирование…';
-      setStatus('Наведи маркер в круг');
-      stateVal.textContent = 'Сканирование';
-
+      startBtn.style.display = 'none';
+      setStatus('Hold marker in view');
       timer = setInterval(processFrame, INTERVAL_MS);
     } catch(e) {
-      console.error(e);
-      setStatus('Нет доступа к камере');
-      stateVal.textContent = 'Ошибка';
+      setStatus('Camera unavailable');
     }
   }
 
   function stopCamera() {
     clearInterval(timer);
-    stream?.getTracks().forEach(t => t.stop());
+    stream?.getTracks().forEach(t=>t.stop());
     scanning = false;
   }
 
-  /* ── Анализ кадра ───────────────────────────────────────── */
+  /* ── Frame ──────────────────────────────────────────── */
 
   function processFrame() {
-    if (!scanning || locked || !video.videoWidth) return;
+    if (!scanning||locked||!video.videoWidth) return;
 
     const c = document.createElement('canvas');
-    c.width  = video.videoWidth;
-    c.height = video.videoHeight;
-    c.getContext('2d', { willReadFrequently: true }).drawImage(video, 0, 0);
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d',{willReadFrequently:true}).drawImage(video,0,0);
 
-    let frameHash;
-    try { frameHash = computeHash(c); }
-    catch(e) { console.error(e); return; }
-
-    let bestSim = 0;
+    let best = 0;
     for (const ref of refHashes) {
-      const s = similarity(frameHash, ref.hash);
-      if (s > bestSim) bestSim = s;
+      const s = bestSimilarity(c, ref);
+      if (s > best) best = s;
     }
 
-    simVal.textContent = (bestSim * 100).toFixed(0) + '%';
-    drawRing(bestSim);
+    drawRing(best);
 
-    if (bestSim >= THRESHOLD) {
-      stateVal.textContent = 'Найдено!';
-      setStatus('Маркер распознан!', true);
-      onDetected();
+    if (best >= THRESHOLD) {
+      locked = true;
+      stopCamera();
+      success.classList.add('show');
+      setTimeout(()=>{ window.location.href = TARGET_URL; }, 1000);
     } else {
-      stateVal.textContent = 'Сканирование';
-      setStatus('Схожесть: ' + (bestSim * 100).toFixed(0) + '%');
+      setStatus('Scanning…' + (best > 0.5 ? ' (' + Math.round(best*100) + '%)' : ''));
     }
   }
 
-  function onDetected() {
-    locked = true;
-    stopCamera();
-    toast.classList.add('show');
-    setTimeout(() => { window.location.href = TARGET_URL; }, 900);
-  }
-
-  /* ── Статический тест ───────────────────────────────────── */
-
-  async function runTest() {
-    if (!refHashes.length || locked) return;
-    setStatus('Тест…');
-    try {
-      const img  = await loadImg(refHashes[0].path);
-      const hash = computeHash(img);
-      const sim  = similarity(hash, refHashes[0].hash);
-      simVal.textContent = (sim * 100).toFixed(0) + '%';
-      drawRing(sim);
-      const ok = sim >= THRESHOLD;
-      stateVal.textContent = ok ? 'Тест ОК' : 'Тест провален';
-      setStatus(ok ? 'Тест пройден ✓' : 'Тест провален', ok);
-    } catch(e) {
-      setStatus('Ошибка теста');
-    }
-  }
-
-  /* ── Init ───────────────────────────────────────────────── */
+  /* ── Init ───────────────────────────────────────────── */
 
   startBtn.addEventListener('click', startCamera);
-  testBtn.addEventListener('click', runTest);
-
+  setStatus('Loading…');
   loadRefs();
 })();
 </script>
