@@ -1,568 +1,423 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+
+<html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Scan4Proof – marker scanner</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Scan4Proof</title>
   <style>
-    :root,[data-theme="light"]{
-      --bg:#0f1012;
-      --surface:#17181c;
-      --surface2:#1f2127;
-      --text:#f5f6fa;
-      --muted:#8b8f9c;
-      --border:rgba(255,255,255,.12);
-      --accent:#d6ff39;
-      --success:#7fd39b;
-      --danger:#ff7e8b;
-      --shadow:0 18px 52px rgba(0,0,0,.55);
-      --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    }
-    [data-theme="dark"]{
-      /* same palette, just to be explicit */
-    }
-    *{box-sizing:border-box;}
-    html,body{margin:0;}
+    *{box-sizing:border-box;margin:0;padding:0;}
     body{
       min-height:100dvh;
-      background:
-        radial-gradient(circle at top, rgba(214,255,57,.14), transparent 26%),
-        var(--bg);
-      color:var(--text);
-      font:16px/1.5 var(--font);
+      background:radial-gradient(circle at top,rgba(214,255,57,.14),transparent 26%) #0f1012;
+      color:#f5f6fa;
+      font:16px/1.5 system-ui,sans-serif;
       -webkit-font-smoothing:antialiased;
     }
-    button{font:inherit;cursor:pointer;}
-    .app{max-width:720px;margin:0 auto;padding:16px;}
-    .top{
-      display:flex;justify-content:space-between;align-items:center;
-      gap:12px;margin-bottom:14px;
-    }
-    .brand{display:flex;align-items:center;gap:12px;}
+    .app{max-width:480px;margin:0 auto;padding:16px;display:grid;gap:14px;}
+    /* header */
+    .top{display:flex;align-items:center;gap:12px;}
     .logo{
-      width:44px;height:44px;border-radius:999px;
-      border:1px solid var(--border);
-      display:grid;place-items:center;
+      width:44px;height:44px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.12);
+      display:grid;place-items:center;flex-shrink:0;
       background:radial-gradient(circle at 30% 0,rgba(214,255,57,.3),transparent 55%);
     }
-    .brand h1{
-      margin:0;font-size:15px;letter-spacing:.08em;text-transform:uppercase;
-    }
-    .brand p{margin:0;font-size:12px;color:var(--muted);}
-    .toggle{
-      width:40px;height:40px;border-radius:999px;
-      border:1px solid var(--border);
-      background:var(--surface);color:var(--text);
-    }
+    h1{font-size:15px;letter-spacing:.08em;text-transform:uppercase;}
+    .sub{font-size:12px;color:#8b8f9c;}
+    /* screen */
     .screen{
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:32px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
+      background:#17181c;border:1px solid rgba(255,255,255,.12);
+      border-radius:32px;overflow:hidden;box-shadow:0 18px 52px rgba(0,0,0,.55);
     }
-    .camera{
-      position:relative;
-      aspect-ratio:9/16;
-      min-height:72dvh;
-      background:#000;
-    }
-    video,canvas{
-      position:absolute;inset:0;
-      width:100%;height:100%;
-    }
-    video{object-fit:cover;background:#000;}
+    .cam{position:relative;aspect-ratio:9/16;min-height:72dvh;background:#000;}
+    video,canvas{position:absolute;inset:0;width:100%;height:100%;}
+    video{object-fit:cover;}
     canvas{pointer-events:none;}
-    .hud{
-      position:absolute;inset:0;
-      display:flex;flex-direction:column;
-      justify-content:space-between;
-      padding:18px;
-    }
-    .pill,.toast,.controls,.stats{pointer-events:auto;}
+    /* HUD */
+    .hud{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:18px;}
     .pill{
-      display:inline-flex;align-items:center;gap:10px;
-      width:max-content;max-width:100%;
+      display:inline-flex;align-items:center;gap:10px;width:max-content;max-width:100%;
       padding:10px 14px;border-radius:999px;
-      background:rgba(9,10,14,.78);
-      border:1px solid rgba(255,255,255,.16);
-      color:#fff;
-      backdrop-filter:blur(12px);
-      font-size:14px;
+      background:rgba(9,10,14,.78);border:1px solid rgba(255,255,255,.16);
+      backdrop-filter:blur(12px);font-size:14px;
     }
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-      background:var(--accent);
-      box-shadow:0 0 0 8px rgba(214,255,57,.16);
-    }
-    .pill.ok .dot{
-      background:var(--success);
-      box-shadow:0 0 0 8px rgba(127,211,155,.18);
-    }
+    .dot{width:10px;height:10px;border-radius:50%;background:#d6ff39;box-shadow:0 0 0 8px rgba(214,255,57,.16);}
+    .pill.ok .dot{background:#7fd39b;box-shadow:0 0 0 8px rgba(127,211,155,.18);}
     .guide{
-      align-self:center;justify-self:center;margin:auto;
-      width:min(74vw,410px);aspect-ratio:1/1;
-      border-radius:999px;
+      align-self:center;margin:auto;
+      width:min(74vw,340px);aspect-ratio:1;border-radius:50%;
       border:2px solid rgba(255,255,255,.82);
       box-shadow:0 0 0 999px rgba(0,0,0,.18);
       position:relative;
     }
-    .guide:before,.guide:after{
-      content:"";position:absolute;border-radius:999px;
+    .guide::before,.guide::after{
+      content:"";position:absolute;border-radius:50%;
       border:2px solid rgba(214,255,57,.78);
     }
-    .guide:before{inset:20px;}
-    .guide:after{inset:40px;border-color:rgba(255,255,255,.32);}
-    .bottom{display:grid;gap:12px;}
+    .guide::before{inset:20px;}
+    .guide::after{inset:40px;border-color:rgba(255,255,255,.32);}
+    /* bottom */
+    .bottom{display:grid;gap:10px;}
     .toast{
-      display:none;
-      align-items:center;justify-content:space-between;
-      gap:12px;padding:14px 16px;border-radius:18px;
-      background:rgba(9,10,14,.86);
-      border:1px solid rgba(255,255,255,.18);
-      color:#fff;
+      display:none;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 16px;border-radius:18px;
+      background:rgba(9,10,14,.86);border:1px solid rgba(255,255,255,.18);
       backdrop-filter:blur(14px);
     }
     .toast.show{display:flex;}
     .toast strong{display:block;font-size:14px;}
-    .toast span{display:block;font-size:12px;color:rgba(255,255,255,.76);}
+    .toast small{display:block;font-size:12px;color:rgba(255,255,255,.7);}
     .badge{
       padding:7px 10px;border-radius:999px;
-      background:rgba(127,211,155,.16);
-      color:var(--success);
-      font-size:11px;font-weight:800;
-      letter-spacing:.08em;text-transform:uppercase;
+      background:rgba(127,211,155,.16);color:#7fd39b;
+      font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
     }
     .controls{display:flex;gap:10px;}
     .btn{
-      flex:1;
-      min-height:52px;
-      padding:14px 16px;
-      border-radius:999px;
-      border:1px solid transparent;
-      font-weight:800;
+      flex:1;min-height:52px;padding:14px 16px;border-radius:999px;
+      border:1px solid transparent;font:inherit;font-weight:800;cursor:pointer;
     }
-    .primary{background:var(--accent);color:#101010;}
-    .secondary{
-      background:rgba(9,10,14,.8);
-      color:#fff;
-      border-color:rgba(255,255,255,.18);
-    }
+    .primary{background:#d6ff39;color:#101010;}
+    .secondary{background:rgba(9,10,14,.8);color:#fff;border-color:rgba(255,255,255,.18);}
+    .btn:disabled{opacity:.4;cursor:default;}
+    /* panel */
     .panel{
-      margin-top:14px;
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:24px;
-      padding:16px;
+      background:#17181c;border:1px solid rgba(255,255,255,.12);
+      border-radius:24px;padding:16px;display:grid;gap:10px;
     }
-    .panel p{margin:0 0 12px;color:var(--muted);}
-    .stats{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-    }
+    .panel p{font-size:13px;color:#8b8f9c;}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
     .cell{
       padding:12px;border-radius:16px;
-      background:var(--surface2);
-      border:1px solid var(--border);
+      background:#1f2127;border:1px solid rgba(255,255,255,.12);
     }
-    .cell span{
-      display:block;font-size:12px;
-      letter-spacing:.06em;text-transform:uppercase;
-      color:var(--muted);margin-bottom:6px;
-    }
+    .cell span{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8b8f9c;margin-bottom:6px;}
     .cell strong{font-size:18px;}
-    .sr-only{
-      position:absolute;left:-9999px;
-      width:1px;height:1px;overflow:hidden;
-    }
-    @media (max-width:640px){
-      .camera{min-height:78dvh;}
-      .stats{grid-template-columns:1fr;}
-    }
   </style>
 </head>
 <body>
-  <a href="#scanner" class="sr-only">Skip to scanner</a>
-  <div class="app">
-    <header class="top">
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7">
-            <circle cx="12" cy="12" r="8"></circle>
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"></path>
-          </svg>
-        </div>
-        <div>
-          <h1>Scan4Proof</h1>
-          <p>Opens product page only when one of four images is detected</p>
-        </div>
-      </div>
-      <button type="button" class="toggle" data-theme-toggle aria-label="Toggle theme">◐</button>
-    </header>
+<div class="app">
+  <header class="top">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7">
+        <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Scan4Proof</h1>
+      <p class="sub">Наведи камеру на маркер</p>
+    </div>
+  </header>
 
-    <main id="scanner" class="screen">
-      <section class="camera" aria-label="Scanner screen">
-        <video id="video" playsinline autoplay muted></video>
-        <canvas id="overlay"></canvas>
-
-        <div class="hud">
-          <div id="statusPill" class="pill">
-            <span class="dot"></span>
-            <span id="statusText">Loading detection engine…</span>
+  <main class="screen">
+    <div class="cam">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="overlay"></canvas>
+      <div class="hud">
+        <div id="pill" class="pill">
+          <span class="dot"></span>
+          <span id="pillTxt">Инициализация…</span>
+        </div>
+        <div class="guide" aria-hidden="true"></div>
+        <div class="bottom">
+          <div id="toast" class="toast" role="status" aria-live="polite">
+            <div>
+              <strong>Маркер найден!</strong>
+              <small>Переход на сайт…</small>
+            </div>
+            <div class="badge">OK</div>
           </div>
-
-          <div class="guide" aria-hidden="true"></div>
-
-          <div class="bottom">
-            <div id="toast" class="toast" role="status" aria-live="polite">
-              <div>
-                <strong>Code detected</strong>
-                <span>Opening product page…</span>
-              </div>
-              <div class="badge">Detected</div>
-            </div>
-            <div class="controls">
-              <button id="startBtn" class="btn primary" type="button">Start camera</button>
-              <button id="testBtn" class="btn secondary" type="button">Run static test</button>
-            </div>
+          <div class="controls">
+            <button id="startBtn" class="btn primary" disabled>Старт камеры</button>
+            <button id="testBtn" class="btn secondary">Тест</button>
           </div>
         </div>
-      </section>
-    </main>
-
-    <section class="panel" aria-label="Detection info">
-      <p>Camera feed is compared against four reference images (`assets/ref1.jpeg`…`ref4.jpeg`) using ORB + BFMatcher. Redirect happens only when at least one reference image is confidently matched.</p>
-      <div class="stats">
-        <div class="cell">
-          <span>Best score</span>
-          <strong id="scoreValue">0</strong>
-        </div>
-        <div class="cell">
-          <span>State</span>
-          <strong id="stateValue">Waiting</strong>
-        </div>
-        <div class="cell">
-          <span>Matches threshold</span>
-          <strong id="thresholdValue">32</strong>
-        </div>
       </div>
-    </section>
-  </div>
+    </div>
+  </main>
 
-  <!-- OpenCV.js -->
-  <script async src="https://docs.opencv.org/4.7.0/opencv.js"></script>
+  <section class="panel">
+    <p>Сравнение по pHash (перцептивный хэш). Нет тяжёлых библиотек — работает на любом телефоне.</p>
+    <div class="stats">
+      <div class="cell"><span>Схожесть</span><strong id="simVal">—</strong></div>
+      <div class="cell"><span>Статус</span><strong id="stateVal">Ожидание</strong></div>
+      <div class="cell"><span>Порог</span><strong id="thrVal">—</strong></div>
+    </div>
+  </section>
+</div>
 
-  <script>
-    (() => {
-      const TARGET_URL = 'https://goldberry.vercel.app/';
-      const MATCH_THRESHOLD = 32;   // how many good matches we need
-      const PROCESS_EVERY_MS = 260; // ms between frames
+<script>
+(() => {
+  const TARGET_URL   = 'https://goldberry.vercel.app/';
+  const HASH_SIZE    = 16;          // 16×16 pHash → 256 бит
+  const THRESHOLD    = 0.75;        // схожесть 0..1, выше = лучше
+  const INTERVAL_MS  = 400;         // пауза между кадрами
 
-      const statusText = document.getElementById('statusText');
-      const statusPill = document.getElementById('statusPill');
-      const toast = document.getElementById('toast');
-      const scoreValue = document.getElementById('scoreValue');
-      const stateValue = document.getElementById('stateValue');
-      const thresholdValue = document.getElementById('thresholdValue');
-      const video = document.getElementById('video');
-      const overlay = document.getElementById('overlay');
-      const ctx = overlay.getContext('2d', { willReadFrequently: true });
-      const startBtn = document.getElementById('startBtn');
-      const testBtn = document.getElementById('testBtn');
-      const toggle = document.querySelector('[data-theme-toggle]');
+  /* Пути к референсным изображениям */
+  const REF_PATHS = [
+    'assets/ref1.jpeg',
+    'assets/ref1.jpeg.jpg',
+    'assets/ref2.jpeg.jpg',
+    'assets/ref3.jpeg.jpg',
+    'assets/ref4.jpeg.jpg',
+  ];
 
-      thresholdValue.textContent = MATCH_THRESHOLD;
+  /* DOM */
+  const pill     = document.getElementById('pill');
+  const pillTxt  = document.getElementById('pillTxt');
+  const toast    = document.getElementById('toast');
+  const simVal   = document.getElementById('simVal');
+  const stateVal = document.getElementById('stateVal');
+  const thrVal   = document.getElementById('thrVal');
+  const video    = document.getElementById('video');
+  const overlay  = document.getElementById('overlay');
+  const ctx      = overlay.getContext('2d', { willReadFrequently: true });
+  const startBtn = document.getElementById('startBtn');
+  const testBtn  = document.getElementById('testBtn');
 
-      let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', theme);
-      toggle.addEventListener('click', () => {
-        theme = theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', theme);
+  thrVal.textContent = (THRESHOLD * 100).toFixed(0) + '%';
+
+  let refHashes = [];
+  let scanning  = false;
+  let locked    = false;
+  let stream    = null;
+  let timer     = null;
+
+  /* ── pHash ─────────────────────────────────────────────── */
+
+  function getPixels(img) {
+    const c = document.createElement('canvas');
+    c.width = c.height = HASH_SIZE;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(img, 0, 0, HASH_SIZE, HASH_SIZE);
+    return x.getImageData(0, 0, HASH_SIZE, HASH_SIZE).data;
+  }
+
+  function toGrayRow(pixels) {
+    const n = HASH_SIZE * HASH_SIZE;
+    const g = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const o = i * 4;
+      g[i] = 0.299 * pixels[o] + 0.587 * pixels[o+1] + 0.114 * pixels[o+2];
+    }
+    return g;
+  }
+
+  /* 1-D DCT-II (наивная, достаточно быстрая для 16×16) */
+  function dct1d(arr) {
+    const N = arr.length;
+    const out = new Float32Array(N);
+    for (let k = 0; k < N; k++) {
+      let s = 0;
+      for (let n = 0; n < N; n++) s += arr[n] * Math.cos(Math.PI * k * (2*n+1) / (2*N));
+      out[k] = s;
+    }
+    return out;
+  }
+
+  /* 2-D DCT: apply 1-D по строкам, затем по столбцам */
+  function dct2d(gray) {
+    const N = HASH_SIZE;
+    const tmp = new Float32Array(N * N);
+    // rows
+    for (let r = 0; r < N; r++) {
+      const row = gray.slice(r * N, r * N + N);
+      const d = dct1d(row);
+      for (let c = 0; c < N; c++) tmp[r * N + c] = d[c];
+    }
+    // cols
+    const out = new Float32Array(N * N);
+    for (let c = 0; c < N; c++) {
+      const col = new Float32Array(N);
+      for (let r = 0; r < N; r++) col[r] = tmp[r * N + c];
+      const d = dct1d(col);
+      for (let r = 0; r < N; r++) out[r * N + c] = d[r];
+    }
+    return out;
+  }
+
+  function computeHash(img) {
+    const pixels = getPixels(img);
+    const gray   = toGrayRow(pixels);
+    const dct    = dct2d(gray);
+
+    // берём левый верхний квадрат 8×8 (кроме [0,0])
+    const sub = [];
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++)
+        if (r || c) sub.push(dct[r * HASH_SIZE + c]);
+
+    const mean = sub.reduce((a, b) => a + b, 0) / sub.length;
+    return sub.map(v => v > mean ? 1 : 0);
+  }
+
+  function similarity(h1, h2) {
+    let same = 0;
+    for (let i = 0; i < h1.length; i++) if (h1[i] === h2[i]) same++;
+    return same / h1.length;
+  }
+
+  /* ── Загрузка референсов ────────────────────────────────── */
+
+  function loadImg(src) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload  = () => res(img);
+      img.onerror = () => rej(new Error('Не загрузить: ' + src));
+      img.src = src + '?v=' + Date.now();
+    });
+  }
+
+  async function loadRefs() {
+    setStatus('Загрузка референсов…');
+    let ok = 0;
+    for (const path of REF_PATHS) {
+      try {
+        const img  = await loadImg(path);
+        const hash = computeHash(img);
+        refHashes.push({ path, hash });
+        ok++;
+      } catch(e) {
+        console.warn(e.message);
+      }
+    }
+    if (ok === 0) {
+      setStatus('Ошибка: ни один референс не загружен');
+      stateVal.textContent = 'Ошибка';
+      return false;
+    }
+    setStatus(`Готово (${ok} из ${REF_PATHS.length} загружено). Нажми «Старт».`, true);
+    stateVal.textContent = 'Готово';
+    startBtn.disabled = false;
+    return true;
+  }
+
+  /* ── UI helpers ─────────────────────────────────────────── */
+
+  function setStatus(txt, ok = false) {
+    pillTxt.textContent = txt;
+    pill.classList.toggle('ok', ok);
+  }
+
+  function drawRing(sim) {
+    const w = overlay.width, h = overlay.height;
+    if (!w || !h) return;
+    ctx.clearRect(0, 0, w, h);
+    const r   = Math.min(w, h) * 0.35;
+    const cx  = w / 2, cy = h / 2;
+    const frac = Math.max(0, Math.min(1, sim / THRESHOLD));
+    const found = sim >= THRESHOLD;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
+    ctx.strokeStyle = found ? 'rgba(127,211,155,.98)' : 'rgba(214,255,57,.96)';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+  }
+
+  /* ── Камера ─────────────────────────────────────────────── */
+
+  async function startCamera() {
+    if (scanning || locked) return;
+    try {
+      setStatus('Запрос камеры…');
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }, audio: false
       });
+      video.srcObject = stream;
+      await video.play();
+      overlay.width  = video.videoWidth  || 720;
+      overlay.height = video.videoHeight || 1280;
 
-      let stream = null;
-      let scanning = false;
-      let locked = false;
-      let rafId = 0;
-      let lastProcess = 0;
-
-      // OpenCV stuff
-      let cvReady = false;
-      let orb = null;
-      let matcher = null;
-
-      const refPaths = [
-        'assets/ref1.jpeg',
-        'assets/ref2.jpeg',
-        'assets/ref3.jpeg',
-        'assets/ref4.jpeg'
-      ];
-
-      const references = []; // { name, mat, gray, keypoints, descriptors }
-
-      function setStatus(text, ok = false) {
-        statusText.textContent = text;
-        statusPill.classList.toggle('ok', ok);
-      }
-
-      function drawOverlay(matches, found) {
-        if (!overlay.width || !overlay.height) return;
-        const w = overlay.width;
-        const h = overlay.height;
-        ctx.clearRect(0, 0, w, h);
-        const size = Math.min(w, h) * 0.7;
-        const cx = w / 2;
-        const cy = h / 2;
-        const r = size / 2;
-        const frac = Math.max(0, Math.min(1, matches / MATCH_THRESHOLD));
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, r - 6,
-          -Math.PI / 2,
-          -Math.PI / 2 + Math.PI * 2 * frac
-        );
-        ctx.strokeStyle = found ? 'rgba(127,211,155,.98)' : 'rgba(214,255,57,.96)';
-        ctx.lineWidth = 5;
-        ctx.stroke();
-      }
-
-      function waitForOpenCV() {
-        return new Promise((resolve, reject) => {
-          let attempts = 0;
-          const timer = setInterval(() => {
-            attempts += 1;
-            if (window.cv && cv.Mat && cv.ORB && cv.BFMatcher) {
-              clearInterval(timer);
-              resolve();
-            } else if (attempts > 200) {
-              clearInterval(timer);
-              reject(new Error('OpenCV.js failed to load'));
-            }
-          }, 100);
-        });
-      }
-
-      function loadImage(src) {
-        return new Promise((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => resolve(img);
-          img.onerror = reject;
-          img.src = src + '?v=' + Date.now();
-        });
-      }
-
-      async function prepareReferences() {
-        for (let i = 0; i < refPaths.length; i++) {
-          const path = refPaths[i];
-          const img = await loadImage(path);
-
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const cctx = canvas.getContext('2d', { willReadFrequently: true });
-          cctx.drawImage(img, 0, 0);
-
-          const mat = cv.imread(canvas);
-          const gray = new cv.Mat();
-          cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY);
-
-          const keypoints = new cv.KeyPointVector();
-          const descriptors = new cv.Mat();
-          orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
-
-          references.push({ name: path, mat, gray, keypoints, descriptors });
-        }
-      }
-
-      async function initCV() {
-        setStatus('Loading OpenCV.js…');
-        await waitForOpenCV();
-        cvReady = true;
-
-        // ORB detector & binary BF matcher (Hamming)
-        orb = new cv.ORB(1500);
-        matcher = new cv.BFMatcher(cv.NORM_HAMMING, true);
-
-        setStatus('Loading 4 reference images…');
-        await prepareReferences();
-
-        setStatus('Ready. Tap “Start camera”.', true);
-        stateValue.textContent = 'Ready';
-        startBtn.disabled = false;
-      }
-
-      async function startCamera() {
-        if (!cvReady || scanning || locked) return;
-        try {
-          setStatus('Requesting camera access…');
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' } },
-            audio: false
-          });
-          video.srcObject = stream;
-          await video.play();
-
-          overlay.width = video.videoWidth || 720;
-          overlay.height = video.videoHeight || 1280;
-
-          scanning = true;
-          startBtn.disabled = true;
-          startBtn.textContent = 'Scanning…';
-          setStatus('Point the marker inside the circle');
-          stateValue.textContent = 'Scanning';
-
-          rafId = requestAnimationFrame(loop);
-        } catch (err) {
-          console.error(err);
-          setStatus('Camera access failed');
-          stateValue.textContent = 'Error';
-        }
-      }
-
-      function stopCamera() {
-        if (stream) {
-          stream.getTracks().forEach(t => t.stop());
-        }
-        if (rafId) cancelAnimationFrame(rafId);
-        scanning = false;
-      }
-
-      function analyzeFrame(canvas) {
-        const src = cv.imread(canvas);
-        const gray = new cv.Mat();
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-
-        const keypoints = new cv.KeyPointVector();
-        const descriptors = new cv.Mat();
-        orb.detectAndCompute(gray, new cv.Mat(), keypoints, descriptors);
-
-        let bestMatches = 0;
-        let bestRef = null;
-
-        if (!descriptors.empty() && keypoints.size() > 10) {
-          for (let i = 0; i < references.length; i++) {
-            const ref = references[i];
-            if (ref.descriptors.empty()) continue;
-
-            const matches = new cv.DMatchVector();
-            matcher.match(ref.descriptors, descriptors, matches);
-
-            let good = 0;
-            for (let j = 0; j < matches.size(); j++) {
-              const m = matches.get(j);
-              if (m.distance < 45) good += 1;
-            }
-
-            if (good > bestMatches) {
-              bestMatches = good;
-              bestRef = ref.name;
-            }
-
-            matches.delete();
-          }
-        }
-
-        src.delete();
-        gray.delete();
-        keypoints.delete();
-        descriptors.delete();
-
-        return { bestMatches, bestRef };
-      }
-
-      function loop(ts) {
-        if (!scanning || locked) return;
-        if (ts - lastProcess < PROCESS_EVERY_MS) {
-          rafId = requestAnimationFrame(loop);
-          return;
-        }
-        lastProcess = ts;
-        if (!video.videoWidth) {
-          rafId = requestAnimationFrame(loop);
-          return;
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const cctx = canvas.getContext('2d', { willReadFrequently: true });
-        cctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        let result;
-        try {
-          result = analyzeFrame(canvas);
-        } catch (err) {
-          console.error('Frame error:', err);
-          setStatus('Frame processing error');
-          rafId = requestAnimationFrame(loop);
-          return;
-        }
-
-        const { bestMatches, bestRef } = result;
-        scoreValue.textContent = bestMatches.toString();
-        const found = bestMatches >= MATCH_THRESHOLD;
-        drawOverlay(bestMatches, found);
-
-        if (found) {
-          stateValue.textContent = 'Detected';
-          setStatus('Detected: ' + bestRef, true);
-          onDetected();
-          return;
-        } else {
-          stateValue.textContent = 'Scanning';
-          setStatus('Looking for reference images… matches: ' + bestMatches);
-        }
-
-        rafId = requestAnimationFrame(loop);
-      }
-
-      function onDetected() {
-        locked = true;
-        stopCamera();
-        toast.classList.add('show');
-        setTimeout(() => {
-          window.location.href = TARGET_URL;
-        }, 900);
-      }
-
-      async function runStaticTest() {
-        if (!cvReady || locked) return;
-        // just test on ref1 image to validate the pipeline
-        try {
-          setStatus('Running static test…');
-          const img = await loadImage(refPaths[0]);
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          canvas.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0);
-
-          const { bestMatches } = analyzeFrame(canvas);
-          scoreValue.textContent = bestMatches.toString();
-          const ok = bestMatches >= MATCH_THRESHOLD;
-          drawOverlay(bestMatches, ok);
-          stateValue.textContent = ok ? 'Detected' : 'Test failed';
-          setStatus(ok ? 'Static test passed (ref1 detected)' : 'Static test failed', ok);
-        } catch (err) {
-          console.error(err);
-          setStatus('Static test error');
-        }
-      }
-
+      scanning = true;
       startBtn.disabled = true;
-      setStatus('Booting…');
+      startBtn.textContent = 'Сканирование…';
+      setStatus('Наведи маркер в круг');
+      stateVal.textContent = 'Сканирование';
 
-      startBtn.addEventListener('click', startCamera);
-      testBtn.addEventListener('click', runStaticTest);
+      timer = setInterval(processFrame, INTERVAL_MS);
+    } catch(e) {
+      console.error(e);
+      setStatus('Нет доступа к камере');
+      stateVal.textContent = 'Ошибка';
+    }
+  }
 
-      // init CV
-      initCV().catch(err => {
-        console.error(err);
-        setStatus('Failed to initialize OpenCV.js');
-        stateValue.textContent = 'Error';
-      });
-    })();
-  </script>
+  function stopCamera() {
+    clearInterval(timer);
+    stream?.getTracks().forEach(t => t.stop());
+    scanning = false;
+  }
+
+  /* ── Анализ кадра ───────────────────────────────────────── */
+
+  function processFrame() {
+    if (!scanning || locked || !video.videoWidth) return;
+
+    const c = document.createElement('canvas');
+    c.width  = video.videoWidth;
+    c.height = video.videoHeight;
+    c.getContext('2d', { willReadFrequently: true }).drawImage(video, 0, 0);
+
+    let frameHash;
+    try { frameHash = computeHash(c); }
+    catch(e) { console.error(e); return; }
+
+    let bestSim = 0;
+    for (const ref of refHashes) {
+      const s = similarity(frameHash, ref.hash);
+      if (s > bestSim) bestSim = s;
+    }
+
+    simVal.textContent = (bestSim * 100).toFixed(0) + '%';
+    drawRing(bestSim);
+
+    if (bestSim >= THRESHOLD) {
+      stateVal.textContent = 'Найдено!';
+      setStatus('Маркер распознан!', true);
+      onDetected();
+    } else {
+      stateVal.textContent = 'Сканирование';
+      setStatus('Схожесть: ' + (bestSim * 100).toFixed(0) + '%');
+    }
+  }
+
+  function onDetected() {
+    locked = true;
+    stopCamera();
+    toast.classList.add('show');
+    setTimeout(() => { window.location.href = TARGET_URL; }, 900);
+  }
+
+  /* ── Статический тест ───────────────────────────────────── */
+
+  async function runTest() {
+    if (!refHashes.length || locked) return;
+    setStatus('Тест…');
+    try {
+      const img  = await loadImg(refHashes[0].path);
+      const hash = computeHash(img);
+      const sim  = similarity(hash, refHashes[0].hash);
+      simVal.textContent = (sim * 100).toFixed(0) + '%';
+      drawRing(sim);
+      const ok = sim >= THRESHOLD;
+      stateVal.textContent = ok ? 'Тест ОК' : 'Тест провален';
+      setStatus(ok ? 'Тест пройден ✓' : 'Тест провален', ok);
+    } catch(e) {
+      setStatus('Ошибка теста');
+    }
+  }
+
+  /* ── Init ───────────────────────────────────────────────── */
+
+  startBtn.addEventListener('click', startCamera);
+  testBtn.addEventListener('click', runTest);
+
+  loadRefs();
+})();
+</script>
+
 </body>
 </html>
