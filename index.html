@@ -2,114 +2,132 @@
 
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Scan4Proof</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    html{height:-webkit-fill-available;}
-    body{
-      background:#000;
-      margin:0;padding:0;
-      width:100vw;
-      height:100vh;
-      height:-webkit-fill-available;
-      overflow:hidden;
-      font:16px/1.4 system-ui,sans-serif;
-      color:#fff;
-    }
-    #wrap{
-      position:fixed;
-      inset:0;
-      width:100%;height:100%;
-    }
-    video{
-      position:absolute;inset:0;
-      width:100%;height:100%;
-      object-fit:cover;
-    }
-    canvas#ov{
-      position:absolute;inset:0;
-      width:100%;height:100%;
-      pointer-events:none;
-    }
-    /* top pill */
-    #pill{
-      position:absolute;top:20px;left:50%;transform:translateX(-50%);
-      display:flex;align-items:center;gap:8px;
-      padding:9px 16px;border-radius:999px;
-      background:rgba(0,0,0,.6);
-      border:1px solid rgba(255,255,255,.15);
-      backdrop-filter:blur(10px);
-      font-size:13px;white-space:nowrap;
-      transition:border-color .3s;
-    }
-    #pill.ok{border-color:rgba(127,211,155,.6);}
-    .dot{
-      width:8px;height:8px;border-radius:50%;
-      background:#d6ff39;flex-shrink:0;
-      transition:background .3s;
-    }
-    #pill.ok .dot{background:#7fd39b;}
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Scan4Proof</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-```
-/* bottom button */
-#startBtn{
-  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
-  padding:16px 48px;border-radius:999px;
-  background:#d6ff39;color:#101010;
-  font:inherit;font-weight:800;font-size:15px;
-  border:none;cursor:pointer;
-  box-shadow:0 8px 24px rgba(0,0,0,.4);
+html, body {
+width: 100%;
+height: 100%;
+background: #000;
+overflow: hidden;
+font-family: system-ui, sans-serif;
+color: #fff;
 }
-#startBtn:disabled{opacity:.4;cursor:default;}
 
-/* success overlay */
-#success{
-  display:none;
-  position:absolute;inset:0;
-  background:rgba(0,0,0,.75);
-  flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;
-  backdrop-filter:blur(6px);
+/* video fills entire screen */
+#video {
+position: fixed;
+top: 0; left: 0;
+width: 100%;
+height: 100%;
+object-fit: cover;
+z-index: 0;
 }
-#success.show{display:flex;}
-#success svg{width:72px;height:72px;}
-#success p{font-size:18px;font-weight:700;letter-spacing:.04em;}
-```
 
-  </style>
+#overlay {
+position: fixed;
+top: 0; left: 0;
+width: 100%;
+height: 100%;
+z-index: 1;
+pointer-events: none;
+}
+
+/* status pill top center */
+#pill {
+position: fixed;
+top: 24px;
+left: 50%;
+transform: translateX(-50%);
+z-index: 2;
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 10px 18px;
+border-radius: 999px;
+background: rgba(0,0,0,0.65);
+border: 1px solid rgba(255,255,255,0.2);
+font-size: 14px;
+white-space: nowrap;
+backdrop-filter: blur(10px);
+-webkit-backdrop-filter: blur(10px);
+}
+
+.dot {
+width: 8px; height: 8px;
+border-radius: 50%;
+background: #d6ff39;
+flex-shrink: 0;
+}
+
+#pill.ok .dot { background: #7fd39b; }
+
+/* start button bottom center */
+#startBtn {
+position: fixed;
+bottom: 48px;
+left: 50%;
+transform: translateX(-50%);
+z-index: 2;
+padding: 18px 56px;
+border-radius: 999px;
+background: #d6ff39;
+color: #111;
+font-size: 16px;
+font-weight: 800;
+border: none;
+cursor: pointer;
+}
+
+#startBtn:disabled { opacity: 0.4; }
+
+/* success screen */
+#success {
+display: none;
+position: fixed;
+inset: 0;
+z-index: 10;
+background: rgba(0,0,0,0.8);
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 20px;
+font-size: 20px;
+font-weight: 700;
+}
+#success.show { display: flex; }
+</style>
+
 </head>
 <body>
-<div id="wrap">
-  <video id="video" playsinline autoplay muted></video>
-  <canvas id="ov"></canvas>
 
-  <!-- status -->
+<video id="video" playsinline autoplay muted></video>
+<canvas id="overlay"></canvas>
 
-  <div id="pill"><span class="dot"></span><span id="pillTxt">Initializing…</span></div>
-
-  <!-- start -->
+<div id="pill">
+  <span class="dot"></span>
+  <span id="pillTxt">Loading…</span>
+</div>
 
 <button id="startBtn" disabled>Start Camera</button>
 
-  <!-- success -->
-
-  <div id="success">
-    <svg viewBox="0 0 72 72" fill="none">
-      <circle cx="36" cy="36" r="34" stroke="#7fd39b" stroke-width="3"/>
-      <path d="M22 36l10 10 18-18" stroke="#7fd39b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <p>Marker detected</p>
-  </div>
+<div id="success">
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+    <circle cx="40" cy="40" r="38" stroke="#7fd39b" stroke-width="3"/>
+    <path d="M24 40l12 12 20-20" stroke="#7fd39b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <p>Marker detected</p>
 </div>
 
 <script>
 (() => {
   const TARGET_URL  = 'https://goldberry.vercel.app/';
   const INTERVAL_MS = 350;
-  const HASH_SIZE   = 32;   // bigger hash = more detail
-  const THRESHOLD   = 0.68; // lower = easier to match under camera distortion
+  const HASH_SIZE   = 32;
+  const THRESHOLD   = 0.68;
 
   const REF_PATHS = [
     'assets/ref1.jpeg',
@@ -120,8 +138,8 @@
   ];
 
   const video    = document.getElementById('video');
-  const ov       = document.getElementById('ov');
-  const octx     = ov.getContext('2d', { willReadFrequently: true });
+  const overlay  = document.getElementById('overlay');
+  const octx     = overlay.getContext('2d', { willReadFrequently: true });
   const pill     = document.getElementById('pill');
   const pillTxt  = document.getElementById('pillTxt');
   const startBtn = document.getElementById('startBtn');
@@ -133,25 +151,26 @@
   let stream    = null;
   let timer     = null;
 
-  /* ── pHash ──────────────────────────────────────────── */
+  function setStatus(txt, ok = false) {
+    pillTxt.textContent = txt;
+    pill.classList.toggle('ok', ok);
+  }
 
-  // Resize image to NxN grayscale, compute DCT, return bit array
-  function pHash(source, size) {
-    const N = size;
+  /* ── pHash ── */
+  function pHash(source) {
+    const N = HASH_SIZE;
     const c = document.createElement('canvas');
     c.width = c.height = N;
     const x = c.getContext('2d', { willReadFrequently: true });
     x.drawImage(source, 0, 0, N, N);
     const d = x.getImageData(0, 0, N, N).data;
 
-    // to grayscale float
     const g = new Float32Array(N * N);
     for (let i = 0; i < N * N; i++) {
       const o = i * 4;
       g[i] = 0.299*d[o] + 0.587*d[o+1] + 0.114*d[o+2];
     }
 
-    // 2-D DCT via separable 1-D
     function dct1(a) {
       const n = a.length, r = new Float32Array(n);
       for (let k = 0; k < n; k++) {
@@ -161,10 +180,11 @@
       }
       return r;
     }
+
     const tmp = new Float32Array(N*N);
     for (let r = 0; r < N; r++) {
       const row = g.slice(r*N, r*N+N);
-      const d1  = dct1(row);
+      const d1 = dct1(row);
       for (let c2 = 0; c2 < N; c2++) tmp[r*N+c2] = d1[c2];
     }
     const dct = new Float32Array(N*N);
@@ -175,7 +195,6 @@
       for (let r = 0; r < N; r++) dct[r*N+c2] = d1[r];
     }
 
-    // top-left 8x8 (skip DC)
     const sub = [];
     for (let r = 0; r < 8; r++)
       for (let c2 = 0; c2 < 8; c2++)
@@ -191,26 +210,23 @@
     return s / a.length;
   }
 
-  // Compare at 3 crop sizes to handle zoom differences
-  function bestSimilarity(frameCanvas, refEntry) {
+  function bestSim(frameCanvas, ref) {
     const w = frameCanvas.width, h = frameCanvas.height;
-    const crops = [1.0, 0.8, 0.65];
     let best = 0;
-    for (const scale of crops) {
-      const cw = Math.round(w * scale), ch = Math.round(h * scale);
-      const cx = Math.round((w - cw) / 2),  cy = Math.round((h - ch) / 2);
+    for (const scale of [1.0, 0.8, 0.65]) {
+      const cw = Math.round(w*scale), ch = Math.round(h*scale);
+      const cx = Math.round((w-cw)/2), cy = Math.round((h-ch)/2);
       const tmp = document.createElement('canvas');
       tmp.width = cw; tmp.height = ch;
-      tmp.getContext('2d',{willReadFrequently:true}).drawImage(frameCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
-      const h1 = pHash(tmp, HASH_SIZE);
-      const s  = similarity(h1, refEntry.hash);
+      tmp.getContext('2d',{willReadFrequently:true})
+         .drawImage(frameCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+      const s = similarity(pHash(tmp), ref.hash);
       if (s > best) best = s;
     }
     return best;
   }
 
-  /* ── Refs ───────────────────────────────────────────── */
-
+  /* ── Refs ── */
   function loadImg(src) {
     return new Promise((res, rej) => {
       const img = new Image();
@@ -226,101 +242,91 @@
     for (const path of REF_PATHS) {
       try {
         const img  = await loadImg(path);
-        const hash = pHash(img, HASH_SIZE);
+        const hash = pHash(img);
         refHashes.push({ path, hash });
         ok++;
       } catch(e) { console.warn('Skip:', e); }
     }
-    if (ok === 0) {
-      setStatus('Failed to load references', false);
-      return;
-    }
+    if (ok === 0) { setStatus('No references found'); return; }
     setStatus('Ready', true);
     startBtn.disabled = false;
   }
 
-  /* ── UI ─────────────────────────────────────────────── */
-
-  function setStatus(txt, ok = false) {
-    pillTxt.textContent = txt;
-    pill.classList.toggle('ok', ok);
-  }
-
+  /* ── Draw ── */
   function drawRing(sim) {
-    const w = ov.width, h = ov.height;
+    const w = overlay.width, h = overlay.height;
     if (!w||!h) return;
     octx.clearRect(0,0,w,h);
-    const r   = Math.min(w,h)*0.36;
-    const cx  = w/2, cy = h/2;
+    const r = Math.min(w,h) * 0.36;
+    const cx = w/2, cy = h/2;
     const frac = Math.min(1, sim/THRESHOLD);
-    const found = sim >= THRESHOLD;
 
-    // track ring
     octx.beginPath();
     octx.arc(cx, cy, r, -Math.PI/2, Math.PI*1.5);
-    octx.strokeStyle = 'rgba(255,255,255,.12)';
+    octx.strokeStyle = 'rgba(255,255,255,0.15)';
     octx.lineWidth = 4;
     octx.stroke();
 
-    // progress
     octx.beginPath();
     octx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + Math.PI*2*frac);
-    octx.strokeStyle = found ? '#7fd39b' : '#d6ff39';
+    octx.strokeStyle = sim >= THRESHOLD ? '#7fd39b' : '#d6ff39';
     octx.lineWidth = 4;
     octx.stroke();
 
-    // guide circle (dashed)
     octx.save();
     octx.setLineDash([6,10]);
     octx.beginPath();
     octx.arc(cx, cy, r*0.72, 0, Math.PI*2);
-    octx.strokeStyle = 'rgba(255,255,255,.35)';
+    octx.strokeStyle = 'rgba(255,255,255,0.3)';
     octx.lineWidth = 1.5;
     octx.stroke();
     octx.restore();
   }
 
-  /* ── Camera ─────────────────────────────────────────── */
-
+  /* ── Camera ── */
   async function startCamera() {
     if (scanning||locked) return;
     try {
-      setStatus('Starting camera…');
+      setStatus('Starting…');
       stream = await navigator.mediaDevices.getUserMedia({
-        video:{ facingMode:{ ideal:'environment' }, width:{ideal:1280}, height:{ideal:720} },
-        audio:false
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false
       });
       video.srcObject = stream;
       await video.play();
-      ov.width  = video.videoWidth  || 1280;
-      ov.height = video.videoHeight || 720;
+
+      // size canvas to screen
+      overlay.width  = window.innerWidth;
+      overlay.height = window.innerHeight;
+
       scanning = true;
       startBtn.style.display = 'none';
       setStatus('Hold marker in view');
       timer = setInterval(processFrame, INTERVAL_MS);
     } catch(e) {
-      setStatus('Camera unavailable');
+      console.error(e);
+      setStatus('Camera error: ' + e.message);
     }
   }
 
   function stopCamera() {
     clearInterval(timer);
-    stream?.getTracks().forEach(t=>t.stop());
+    stream?.getTracks().forEach(t => t.stop());
     scanning = false;
   }
 
-  /* ── Frame ──────────────────────────────────────────── */
-
+  /* ── Frame ── */
   function processFrame() {
     if (!scanning||locked||!video.videoWidth) return;
 
     const c = document.createElement('canvas');
-    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.width = video.videoWidth;
+    c.height = video.videoHeight;
     c.getContext('2d',{willReadFrequently:true}).drawImage(video,0,0);
 
     let best = 0;
     for (const ref of refHashes) {
-      const s = bestSimilarity(c, ref);
+      const s = bestSim(c, ref);
       if (s > best) best = s;
     }
 
@@ -330,16 +336,14 @@
       locked = true;
       stopCamera();
       success.classList.add('show');
-      setTimeout(()=>{ window.location.href = TARGET_URL; }, 1000);
+      setTimeout(() => { window.location.href = TARGET_URL; }, 1000);
     } else {
-      setStatus('Scanning…' + (best > 0.5 ? ' (' + Math.round(best*100) + '%)' : ''));
+      const pct = Math.round(best * 100);
+      setStatus(pct > 50 ? `Scanning… ${pct}%` : 'Scanning…');
     }
   }
 
-  /* ── Init ───────────────────────────────────────────── */
-
   startBtn.addEventListener('click', startCamera);
-  setStatus('Loading…');
   loadRefs();
 })();
 </script>
